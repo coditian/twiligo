@@ -10,22 +10,21 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	base = "https://api.twilio.com/2010-04-01"
-)
-
-var DefaultClient = &http.Client{
-	Transport: &http.Transport{
-		TLSHandshakeTimeout: 4 * time.Second,
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-			MinVersion:         tls.VersionTLS10,
-			MaxVersion:         tls.VersionTLS10,
+var (
+	base          = "https://api.twilio.com/2010-04-01"
+	DefaultClient = &http.Client{
+		Transport: &http.Transport{
+			TLSHandshakeTimeout: 4 * time.Second,
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+				MinVersion:         tls.VersionTLS10,
+				MaxVersion:         tls.VersionTLS10,
+			},
+			DisableCompression: false,
+			DisableKeepAlives:  true,
 		},
-		DisableCompression: false,
-		DisableKeepAlives:  true,
-	},
-}
+	}
+)
 
 type Client struct {
 	accountSid string
@@ -40,6 +39,7 @@ func NewClient(accountSid, authToken string, client *http.Client) Client {
 	return Client{
 		accountSid: accountSid,
 		authToken:  authToken,
+		client:     client,
 	}
 }
 
@@ -53,7 +53,7 @@ func unmarshal(res *http.Response, v interface{}) error {
 		ext := Exception{}
 		err = json.Unmarshal(b, &ext)
 		if err != nil {
-			return errors.Wrap(err, "unmarshal exception")
+			return errors.Wrap(err, "unmarshal exception,"+string(b))
 		}
 		return errors.New(ext.Message)
 	}
@@ -71,8 +71,8 @@ func unmarshal(res *http.Response, v interface{}) error {
 }
 
 type Exception struct {
-	Status   int    `json:"status"`    // HTTP specific error code
-	Message  string `json:"message"`   // HTTP error message
-	Code     int    `json:"code"`      // Twilio specific error code
-	MoreInfo string `json:"more_info"` // Additional info from Twilio
+	Status   int    `json:"status"`
+	Message  string `json:"message"`
+	Code     int    `json:"code"`
+	MoreInfo string `json:"more_info"`
 }

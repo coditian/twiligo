@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type Calls struct {
@@ -46,12 +48,12 @@ func (c Client) MakeCall(from, to, callback string) (Calls, error) {
 
 	req, err := http.NewRequest("POST", endpoint, strings.NewReader(v.Encode()))
 	if err != nil {
-		return Calls{}, err
+		return Calls{}, errors.Wrap(err, "new request")
 	}
 
 	res, err := c.client.Do(req)
 	if err != nil {
-		return Calls{}, err
+		return Calls{}, errors.Wrap(err, "client do")
 	}
 
 	err = unmarshal(res, &out)
